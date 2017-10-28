@@ -23,6 +23,7 @@ const mimeType = {
 };
 
 var FileService = function() {
+	var self = this;
 	var folder = config.fileStorage || './storage/';
 	
 	/**
@@ -32,8 +33,12 @@ var FileService = function() {
      */
 	this.checkFileExists = function(filename) {
 		return Promise.try(function () {
-			var extension = filename.substr(filename.lastIndexOf('.'));
-			var type = mimeType[extension].split('/', 1)[0];
+			var type = self.getMIMEType(filename);
+			if (type === undefined) {
+				throw new Error('MIME type of file ' + filename + ' does not exist');
+			}
+			type = type.split('/', 1)[0];
+			
 			filename = path.normalize(folder + type + '/' + filename);
 			
 			return existsAsync(filename)
@@ -68,6 +73,39 @@ var FileService = function() {
 	this.generateFileName = function(originalname) {
 		var extension = originalname.substr(originalname.lastIndexOf('.'));
 		return uuid() + extension;
+	}
+	
+	/**
+     * Get MIME type of file based on its extension
+     * @param  string    file name
+     * @return string    MIME type
+     */
+	this.getMIMEType = function(filename) {
+		var extension = filename.substr(filename.lastIndexOf('.'));
+		return mimeType[extension];
+	}
+	
+	/**
+     * Get information and content of file
+     * @param  string    file name
+     * @return object    information and content of file
+     */
+	this.getFileContent = function(filename) {
+		var file = {
+			path : null,
+			type : self.getMIMEType(filename),
+			content : null
+		};
+		
+		return self.checkFileExists(filename)
+		.then(function (filepath) {
+			file.path = filepath;
+			return fs.readFileSync(filepath);
+		})
+		.then(function (content) {
+			file.content = content;
+			return file;
+		});
 	}
 }
 

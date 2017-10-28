@@ -18,6 +18,7 @@ var upload = multer({storage: storage});
 /** Route Listing **/
 router.get('/download/:id', downloadFile);
 router.post('/upload', upload.single('file'), uploadFile);
+router.get('/view/:id', serveFile);
 
 
 module.exports = router;
@@ -36,9 +37,21 @@ function downloadFile(req, res, next) {
 
 function uploadFile(req, res, next) {
 	var file = req.file;
-	
 	var result = {
 		filename: req.file.filename
 	};
 	res.status(200).json(result);
 }
+
+function serveFile(req, res, next) {
+	return fileService.getFileContent(req.params.id)
+	.then(function (file) {
+		res.writeHead(200, {'Content-Type': file.type });
+		res.end(file.content, 'binary');
+	})
+	.catch(function (error) {
+		console.log(error);
+		res.status(404).end();
+	});
+}
+
