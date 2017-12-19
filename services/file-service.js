@@ -3,7 +3,7 @@ var fs = require('fs');
 var existsAsync = require('exists-async');
 var uuid = require('uuid/v1');
 var path = require('path');
-var config = require('../config/config.json');
+var config;
 
 const mimeType = {
 	'.ico' : 'image/x-icon',
@@ -23,6 +23,12 @@ const mimeType = {
 };
 
 var FileService = function() {
+	try {
+		config = require('../config/config.json');
+	} catch (err) {
+		config = {};
+	}
+	
 	var self = this;
 	var folder = config.fileStorage || './storage/';
 	
